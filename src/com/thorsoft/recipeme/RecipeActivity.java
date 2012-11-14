@@ -1,101 +1,166 @@
 package com.thorsoft.recipeme;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.annotation.TargetApi;
 import android.app.ListActivity;
 import android.app.LoaderManager;
 import android.content.Context;
-import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.ContactsContract;
-import android.support.v4.view.ViewPager.LayoutParams;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 
-public class RecipeActivity extends ListActivity
-		        implements LoaderManager.LoaderCallbacks<Cursor> {
-
+public class RecipeActivity extends ListActivity 
+			implements LoaderManager.LoaderCallbacks<Cursor> {
+			private Context list;
 		    // This is the Adapter being used to display the list's data
 		    SimpleCursorAdapter mAdapter;
-
-		    // These are the Contacts rows that we will retrieve
-		    static final String[] PROJECTION = new String[] {ContactsContract.Data._ID,
-		            ContactsContract.Data.DISPLAY_NAME};
-
-		    // This is the select criteria
-		    static final String SELECTION = "((" + 
-		            ContactsContract.Data.DISPLAY_NAME + " NOTNULL) AND (" +
-		            ContactsContract.Data.DISPLAY_NAME + " != '' ))";
+		    // url to make re10.4.53.19910.4.53.199quest
+		    private static String url = "http://10.4.53.199:8080/ingredients/";
+		     
+		    // JSON Node names
+		    private static final String TAG_INGRE = "ingredients";
+		   
 
 		    @TargetApi(11)
 			@Override
 		    protected void onCreate(Bundle savedInstanceState) {
 		        super.onCreate(savedInstanceState);
-
-		        // Create a progress bar to display while the list loads
-		        ProgressBar progressBar = new ProgressBar(this);
-		        //progressBar.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-		        progressBar.setLayoutParams(new LayoutParams());
-		        progressBar.setIndeterminate(true);
-		        getListView().setEmptyView(progressBar);
-
-		        // Must add the progress bar to the root of the layout
-		        ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
-		        root.addView(progressBar);
-
-		        // For the cursor adapter, specify which columns go into which views
-		        String[] fromColumns = {ContactsContract.Data.DISPLAY_NAME};
-		        int[] toViews = {android.R.id.text1}; // The TextView in simple_list_item_1
-		        toast(fromColumns.toString());
-		        // Create an empty adapter we will use to display the loaded data.
-		        // We pass null for the cursor, then update it in onLoadFinished()
-		        mAdapter = new SimpleCursorAdapter(this, 
-		                android.R.layout.simple_list_item_checked, null,
-		                fromColumns, toViews, 0);
-		        setListAdapter(mAdapter);
-
-		        // Prepare the loader.  Either re-connect with an existing one,
-		        // or start a new one.
-		        getLoaderManager().initLoader(0, null, this);
+		        
+		        //http://www.vogella.com/articles/AndroidListView/article.html
+		        //http://www.androidhive.info/2012/01/android-json-parsing-tutorial/
+		        list = (Context)this;
+		        loadIngredients();
 		    }
-
-		    // Called when a new Loader needs to be created
-		    @TargetApi(11)
-			public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-		        // Now create and return a CursorLoader that will take care of
-		        // creating a Cursor for the data being displayed.
-		        return new CursorLoader(this, ContactsContract.Data.CONTENT_URI,
-		                PROJECTION, SELECTION, null, null);
+		    private class JSONParser extends AsyncTask<String,Void,JSONObject> {
+		    	 
+		        InputStream is = null;
+		        JSONObject jObj = null;
+		        String json = "";
+		     
+		        // constructor
+		        public JSONParser() {
+		     
+		        }
+		     
+		        public JSONObject getJSONFromUrl(String url) {
+		     
+		            // Making HTTP request
+		            try {
+		                // defaultHttpClient
+		                DefaultHttpClient httpClient = new DefaultHttpClient();
+		                HttpGet httpGet = new HttpGet(url);
+		     
+		                HttpResponse httpResponse = httpClient.execute(httpGet);
+		                HttpEntity httpEntity = httpResponse.getEntity();
+		                is = httpEntity.getContent();           
+		     
+		            } catch (UnsupportedEncodingException e) {
+		                e.printStackTrace();
+		            } catch (ClientProtocolException e) {
+		                e.printStackTrace();
+		            } catch (IOException e) {
+		                e.printStackTrace();
+		            }
+		     
+		            try {
+		                BufferedReader reader = new BufferedReader(new InputStreamReader(
+		                        is, "iso-8859-1"), 8);
+		                StringBuilder sb = new StringBuilder();
+		                String line = null;
+		                while ((line = reader.readLine()) != null) {
+		                    sb.append(line + "\n");
+		                }
+		                is.close();
+		                json = sb.toString();
+		            } catch (Exception e) {
+		                Log.e("Buffer Error", "Error converting result " + e.toString());
+		            }
+		            
+		            // try parse the string to a JSON object
+		            try {
+		                jObj = new JSONObject(json);
+		            } catch (JSONException e) {
+		                Log.e("JSON Parser", "Error parsing data " + e.toString()+json);
+		            }
+		     
+		            // return JSON String
+		            return jObj;
+		     
+		        }
+		        protected void onPostExecute(JSONObject result) {
+					JSONArray ingredients = null;
+			    	String[] ing = null;
+			    	toast("Got Here");
+			    	try {
+			    	    ingredients = result.getJSONArray(TAG_INGRE);
+			    	    ing = new String[ingredients.length()];
+			    	    // looping through All Contacts
+			    	    for(int i = 0; i < ingredients.length(); i++){
+			    	        String ingred = ingredients.getString(i);		    	        
+			                ing[i]=ingred; 
+			    	    }
+			    	} catch (JSONException e) {
+			    	    Log.e("JSON Problem","");
+			    	}
+			    	ArrayAdapter<String> adapter = new ArrayAdapter<String>(list,
+			                android.R.layout.simple_list_item_checked, ing);
+			        setListAdapter(adapter); 
+				}
+		    	@Override
+		    	protected JSONObject doInBackground(String... url) {
+		    		return getJSONFromUrl(url[0]);
+		    		
+		    	}
 		    }
-
-		    // Called when a previously created loader has finished loading
-		    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-		        // Swap the new cursor in.  (The framework will take care of closing the
-		        // old cursor once we return.)
-		        mAdapter.swapCursor(data);
+		    public void loadIngredients(){
+		    	
+		    	JSONParser jParser = new JSONParser();
+			    jParser.execute(new String[] {url});
+		    	
 		    }
-
-		    // Called when a previously created loader is reset, making the data unavailable
-		    @TargetApi(11)
-			public void onLoaderReset(Loader<Cursor> loader) {
-		        // This is called when the last Cursor provided to onLoadFinished()
-		        // above is about to be closed.  We need to make sure we are no
-		        // longer using it.
-		        mAdapter.swapCursor(null);
-		    }
-
-		    @Override 
+		   
 		    public void onListItemClick(ListView l, View v, int position, long id) {
-		        // Do something when a list item is clicked
+		        
+		    	// Do something when a list item is clicked
 		    	 CheckedTextView textView = (CheckedTextView)v;
 		    	 textView.setChecked(!textView.isChecked());
+		    	//Intent intent = new Intent(this, RecipeMainActivity.class);
+		    	//intent.putExtra(URL, url);
+		     	//intent.putExtra(INGREDIENTS, ingrList);
+		     	//startActivity(intent);
+		    	if (position == 0){
+		    		ListView list = (ListView) findViewById(R.id.ingredients);
+		    		if (list != null){	 
+		    			SparseBooleanArray checked = list.getCheckedItemPositions();
+		    			for (int i = 0; i < checked.size(); i++) {
+		    				Log.i("ListViewTest", "Position"+i+": " + checked.get(i));
+		    			}
+		    		}
+		    	}
 		    }
 		    
 		    public void toast(String s ){
@@ -106,6 +171,24 @@ public class RecipeActivity extends ListActivity
 		    	Toast toast = Toast.makeText(context, text, duration);
 		    	toast.show();
 		    }
+
+			public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			public void onLoadFinished(Loader<Cursor> arg0, Cursor arg1) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void onLoaderReset(Loader<Cursor> arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+
+			  
 		}
 
 		

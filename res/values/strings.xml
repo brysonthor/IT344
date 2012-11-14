@@ -7,8 +7,9 @@
     <string name="sign_in">Sign In</string>
     <string name="user_name">User Name</string>
     <string name="password">Password</string>
-    <string name="title_activity_sign_in">SignInActivity</string>
-    <string name="title_activity_recipe">RecipeMe</string>
+    <string name="title_activity_sign_in">Sign In </string>
+    <string name="title_activity_recipe">Choose Your Ingredients</string>
     <string name="choose_ingredients">Choose Ingredients</string>
+    <string name="title_activity_recipe_main">Recipes You Can Cook</string>
 
 </resources>

@@ -5,11 +5,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 	public final static String USER_NAME = "com.thorsoft.recipeme.signInUser";
@@ -26,14 +28,27 @@ public class MainActivity extends Activity {
         return true;
     }
     public void signIn(View view){
-    	Intent intent = new Intent(this, SignInActivity.class);
+    	//Intent intent = new Intent(this, SignInActivity.class);
     	EditText editText = (EditText) findViewById(R.id.userName);
     	EditText editText2 = (EditText) findViewById(R.id.passwordField);
     	String user = editText.getText().toString();
     	String pass = editText2.getText().toString();
-    	intent.putExtra(USER_NAME, user);
-    	intent.putExtra(PASS, pass);
-    	startActivity(intent);
+    	//intent.putExtra(USER_NAME, user);
+    	//intent.putExtra(PASS, pass);
+    	//startActivity(intent);
+    	boolean auth = true;
+     	
+     	
+     	
+         
+        if (auth == true){
+        	toast("Authenticated");
+         	Intent intent1 = new Intent(this, RecipeActivity.class);
+         
+         	startActivity(intent1);
+         	//then go to the real app
+        }
+    
     }
     public String hashSha256(String toHash){
 		
@@ -55,5 +70,13 @@ public class MainActivity extends Activity {
     	byte[] digest = md.digest();
     	return digest.toString();
     	
+    }
+    public void toast(String s ){
+    	Context context = getApplicationContext();
+    	CharSequence text = s;
+    	int duration = Toast.LENGTH_LONG;
+
+    	Toast toast = Toast.makeText(context, text, duration);
+    	toast.show();
     }
 }
