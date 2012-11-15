@@ -74,7 +74,7 @@ public class MainActivity extends Activity {
     public void toast(String s ){
     	Context context = getApplicationContext();
     	CharSequence text = s;
-    	int duration = Toast.LENGTH_LONG;
+    	int duration = Toast.LENGTH_SHORT;
 
     	Toast toast = Toast.makeText(context, text, duration);
     	toast.show();

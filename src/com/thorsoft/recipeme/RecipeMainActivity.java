@@ -17,6 +17,7 @@ import org.json.JSONObject;
 
 import android.app.ListActivity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.AsyncTask;
@@ -34,15 +35,20 @@ public class RecipeMainActivity extends ListActivity {
 	private Context list;
 	private static final String TAG_RECIPES = "recipes";
     // This is the Adapter being used to display the list's data
-    SimpleCursorAdapter mAdapter;
-	private static String url = null;
+    public String sendIng;
+	SimpleCursorAdapter mAdapter;
+	public String urlTwo = null;
 	protected void onCreate(Bundle savedInstanceState) {
 	        super.onCreate(savedInstanceState);
-	        
+	        Intent i = getIntent();
+	        Bundle b = i.getExtras();
+	        sendIng = b.getString(RecipeActivity.INGREDIENTS);
+	        urlTwo = b.getString(RecipeActivity.URL)+"recipes/";
 	        //http://www.vogella.com/articles/AndroidListView/article.html
 	        //http://www.androidhive.info/2012/01/android-json-parsing-tutorial/
 	        list = (Context)this;
-	        loadIngredients();
+	        //toast(sendIng);
+	        //loadRecipes();
 	    }
 	    private class JSONParser extends AsyncTask<String,Void,JSONObject> {
 	    	 
@@ -125,10 +131,10 @@ public class RecipeMainActivity extends ListActivity {
 	    		
 	    	}
 	    }
-	    public void loadIngredients(){
+	    public void loadRecipes(){
 	    	
 	    	JSONParser jParser = new JSONParser();
-		    jParser.execute(new String[] {url});
+		    jParser.execute(new String[] {urlTwo});
 	    	
 	    }
 	   

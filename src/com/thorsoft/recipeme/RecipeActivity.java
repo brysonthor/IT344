@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Iterator;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -15,41 +17,47 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.ListActivity;
 import android.app.LoaderManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 
 public class RecipeActivity extends ListActivity 
 			implements LoaderManager.LoaderCallbacks<Cursor> {
+			public final static String URL = "com.thorsoft.recipeme.url";
+			public final static String INGREDIENTS = "com.thorsoft.recipeme.ingredients";
 			private Context list;
+			public String[] ing;
+			public HashMap<Integer,String> checked;
 		    // This is the Adapter being used to display the list's data
 		    SimpleCursorAdapter mAdapter;
 		    // url to make re10.4.53.19910.4.53.199quest
-		    private static String url = "http://10.4.53.199:8080/ingredients/";
-		     
+		    private static String url = "http://192.168.100.180:8080/";//ingredients/";
+		    private static String subUrl = "ingredients/";
 		    // JSON Node names
 		    private static final String TAG_INGRE = "ingredients";
 		   
 
-		    @TargetApi(11)
+		    @SuppressLint("UseSparseArrays")
+			@TargetApi(11)
 			@Override
 		    protected void onCreate(Bundle savedInstanceState) {
 		        super.onCreate(savedInstanceState);
-		        
+		        checked = new HashMap<Integer,String>();
 		        //http://www.vogella.com/articles/AndroidListView/article.html
 		        //http://www.androidhive.info/2012/01/android-json-parsing-tutorial/
 		        list = (Context)this;
@@ -113,22 +121,28 @@ public class RecipeActivity extends ListActivity
 		        }
 		        protected void onPostExecute(JSONObject result) {
 					JSONArray ingredients = null;
-			    	String[] ing = null;
-			    	toast("Got Here");
-			    	try {
-			    	    ingredients = result.getJSONArray(TAG_INGRE);
-			    	    ing = new String[ingredients.length()];
-			    	    // looping through All Contacts
-			    	    for(int i = 0; i < ingredients.length(); i++){
-			    	        String ingred = ingredients.getString(i);		    	        
-			                ing[i]=ingred; 
-			    	    }
-			    	} catch (JSONException e) {
-			    	    Log.e("JSON Problem","");
+					//toast("Got Here");
+			    	if(result != null){
+				    	try {
+				    	    ingredients = result.getJSONArray(TAG_INGRE);
+				    	    ing = new String[ingredients.length()];
+				    	    // looping through All Contacts
+				    	    for(int i = 0; i < ingredients.length(); i++){
+				    	        String ingred = ingredients.getString(i);		    	        
+				                ing[i]=ingred; 
+				    	    }
+				    	} catch (JSONException e) {
+				    	    Log.e("JSON Problem","");
+				    	}
 			    	}
+			    	if (ing != null){
 			    	ArrayAdapter<String> adapter = new ArrayAdapter<String>(list,
 			                android.R.layout.simple_list_item_checked, ing);
 			        setListAdapter(adapter); 
+			    	}
+			    	else{
+			    		toast("Server Not Reachable");
+			    	}
 				}
 		    	@Override
 		    	protected JSONObject doInBackground(String... url) {
@@ -139,34 +153,51 @@ public class RecipeActivity extends ListActivity
 		    public void loadIngredients(){
 		    	
 		    	JSONParser jParser = new JSONParser();
-			    jParser.execute(new String[] {url});
+			    jParser.execute(new String[] {url+subUrl});
 		    	
 		    }
 		   
 		    public void onListItemClick(ListView l, View v, int position, long id) {
-		        
+		        String sendable = "null";
 		    	// Do something when a list item is clicked
-		    	 CheckedTextView textView = (CheckedTextView)v;
-		    	 textView.setChecked(!textView.isChecked());
+		    	
+		        if (position == 0){
+		        	if(checked.isEmpty()){
+		        		toast("No Ingredients Choosen");
+		        	}
+		        	else{
+		        		Iterator<String> i = checked.values().iterator();
+		        		while(i.hasNext()){
+		        			sendable += ","+i.next();
+		        		}
+		        		Intent intent = new Intent(this, RecipeMainActivity.class);
+				    	intent.putExtra(URL, url);
+				     	intent.putExtra(INGREDIENTS, sendable);
+				     	startActivity(intent);
+		        	}
+		    	}
+		        
+		        
+		        CheckedTextView textView = (CheckedTextView)v;
+		    	textView.setChecked(!textView.isChecked());
+		    	if(checked.containsKey((Integer)position)){
+		    		checked.remove(((Integer)position));
+		    	}
+		    	else{
+		    		checked.put(((Integer)position), ing[position]);
+		    	}
+		    	//toast(((Integer)position).toString());
 		    	//Intent intent = new Intent(this, RecipeMainActivity.class);
 		    	//intent.putExtra(URL, url);
 		     	//intent.putExtra(INGREDIENTS, ingrList);
 		     	//startActivity(intent);
-		    	if (position == 0){
-		    		ListView list = (ListView) findViewById(R.id.ingredients);
-		    		if (list != null){	 
-		    			SparseBooleanArray checked = list.getCheckedItemPositions();
-		    			for (int i = 0; i < checked.size(); i++) {
-		    				Log.i("ListViewTest", "Position"+i+": " + checked.get(i));
-		    			}
-		    		}
-		    	}
+		  
 		    }
 		    
 		    public void toast(String s ){
 		    	Context context = getApplicationContext();
 		    	CharSequence text = s;
-		    	int duration = Toast.LENGTH_LONG;
+		    	int duration = Toast.LENGTH_SHORT;
 
 		    	Toast toast = Toast.makeText(context, text, duration);
 		    	toast.show();
