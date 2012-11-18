@@ -46,7 +46,7 @@ public class RecipeActivity extends ListActivity
 		    // This is the Adapter being used to display the list's data
 		    SimpleCursorAdapter mAdapter;
 		    // url to make re10.4.53.19910.4.53.199quest
-		    private static String url = "http://192.168.100.180:8080/";//ingredients/";
+		    private static String url = "http://odin:8080/";//ingredients/";
 		    private static String subUrl = "ingredients/";
 		    // JSON Node names
 		    private static final String TAG_INGRE = "ingredients";

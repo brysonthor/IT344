@@ -43,12 +43,13 @@ public class RecipeMainActivity extends ListActivity {
 	        Intent i = getIntent();
 	        Bundle b = i.getExtras();
 	        sendIng = b.getString(RecipeActivity.INGREDIENTS);
-	        urlTwo = b.getString(RecipeActivity.URL)+"recipes/";
+	        String temp = b.getString(RecipeActivity.URL)+"recipes/?ing="+sendIng;
+	        urlTwo = temp.replace(" ", "%20");
 	        //http://www.vogella.com/articles/AndroidListView/article.html
 	        //http://www.androidhive.info/2012/01/android-json-parsing-tutorial/
 	        list = (Context)this;
 	        //toast(sendIng);
-	        //loadRecipes();
+	        loadRecipes();
 	    }
 	    private class JSONParser extends AsyncTask<String,Void,JSONObject> {
 	    	 
@@ -98,7 +99,7 @@ public class RecipeMainActivity extends ListActivity {
 	            // try parse the string to a JSON object
 	            try {
 	                jObj = new JSONObject(json);
-	            } catch (JSONException e) {
+	            } catch (Exception e) {
 	                Log.e("JSON Parser", "Error parsing data " + e.toString()+json);
 	            }
 	     
@@ -107,22 +108,22 @@ public class RecipeMainActivity extends ListActivity {
 	     
 	        }
 	        protected void onPostExecute(JSONObject result) {
-				JSONArray ingredients = null;
+				JSONArray recipes = null;
 		    	String[] ing = null;
-		    	toast("Got Here");
+		    	//toast("Got Here");
 		    	try {
-		    	    ingredients = result.getJSONArray(TAG_RECIPES);
-		    	    ing = new String[ingredients.length()];
+		    	    recipes = result.getJSONArray(TAG_RECIPES);
+		    	    ing = new String[recipes.length()];
 		    	    // looping through All Contacts
-		    	    for(int i = 0; i < ingredients.length(); i++){
-		    	        String ingred = ingredients.getString(i);		    	        
+		    	    for(int i = 0; i < recipes.length(); i++){
+		    	        String ingred = recipes.getString(i);		    	        
 		                ing[i]=ingred; 
 		    	    }
 		    	} catch (JSONException e) {
 		    	    Log.e("JSON Problem","");
 		    	}
 		    	ArrayAdapter<String> adapter = new ArrayAdapter<String>(list,
-		                android.R.layout.simple_list_item_checked, ing);
+		                android.R.layout.simple_list_item_1, ing);
 		        setListAdapter(adapter); 
 			}
 	    	@Override
@@ -138,20 +139,6 @@ public class RecipeMainActivity extends ListActivity {
 	    	
 	    }
 	   
-	    public void onListItemClick(ListView l, View v, int position, long id) {
-	        
-	    	// Do something when a list item is clicked
-	    	 CheckedTextView textView = (CheckedTextView)v;
-	    	 textView.setChecked(!textView.isChecked());
-	    	 if (position == 0){
-	    		 ListView list = (ListView) findViewById(android.R.id.list);
-	    		 SparseBooleanArray checked = list.getCheckedItemPositions();
-	    		 for (int i = 0; i < checked.size(); i++) {
-	    				Log.i("ListViewTest", "Position"+i+": " + checked.get(i));
-	    			}
-	    	 }
-	    }
-	    
 	    public void toast(String s ){
 	    	Context context = getApplicationContext();
 	    	CharSequence text = s;
